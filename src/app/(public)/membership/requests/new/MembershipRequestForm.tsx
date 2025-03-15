@@ -1,10 +1,9 @@
-"use client";
-import React from "react";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { toast } from "sonner";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Button } from "@/components/ui/button";
+'use client'
+import React from 'react'
+import { useForm } from 'react-hook-form'
+import { toast } from 'sonner'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { Button } from '@/components/ui/button'
 import {
   Form,
   FormControl,
@@ -12,119 +11,68 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { MonthYearPicker } from "@/components/MonthYearPicker";
-import { CHURCH_NAME, CURRENT_YEAR, MONTHS_IN_A_YEAR } from "@/constants";
+} from '@/components/ui/form'
+import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
+import { MonthYearPicker } from '@/components/MonthYearPicker'
+import { API_URL, CHURCH_NAME, CURRENT_YEAR, MONTHS_IN_A_YEAR } from '@/constants'
+import { MembershipRequest, membershipRequestSchema } from '@/app/shared/membership-request.schema'
 
-const FormSchema = z.object({
-  firstName: z.string().min(2, {
-    message: "Campo requerido.",
-  }),
-  lastName: z.string().min(2, {
-    message: "Campo requerido.",
-  }),
-  email: z.string().email({
-    message: "Ingresa una dirección de correo válida.",
-  }),
-  phoneNumber: z.string().min(9, {
-    message: "El número de teléfono debe tener al menos 9 dígitos.",
-  }),
-  christianSinceMonth: z.enum(MONTHS_IN_A_YEAR, {
-    required_error: "Selecciona un mes.",
-  }),
-  christianSinceYear: z.coerce
-    .number()
-    .int()
-    .min(
-      CURRENT_YEAR - 100,
-      `El año debe estar entre ${CURRENT_YEAR - 100} y ${CURRENT_YEAR}`
-    )
-    .max(
-      CURRENT_YEAR,
-      `El año debe estar entre ${CURRENT_YEAR - 100} y ${CURRENT_YEAR}`
-    ),
-  hasBeenBaptized: z.enum(["yes", "no"], {
-    required_error: "Selecciona una opción.",
-  }),
-  baptizedOnMonth: z.enum(MONTHS_IN_A_YEAR, {
-    required_error: "Selecciona un mes.",
-  }),
-  baptizedOnYear: z.coerce
-    .number()
-    .int()
-    .min(
-      CURRENT_YEAR - 100,
-      `El año debe estar entre ${CURRENT_YEAR - 100} y ${CURRENT_YEAR}`
-    )
-    .max(
-      CURRENT_YEAR,
-      `El año debe estar entre ${CURRENT_YEAR - 100} y ${CURRENT_YEAR}`
-    ),
-  attendingSinceMonth: z.enum(MONTHS_IN_A_YEAR, {
-    required_error: "Selecciona un mes.",
-  }),
-  attendingSinceYear: z.coerce
-    .number()
-    .int()
-    .min(2020, `El año debe estar entre ${2020} y ${CURRENT_YEAR}`)
-    .max(CURRENT_YEAR, `El año debe estar entre ${2020} y ${CURRENT_YEAR}`),
-  hasCompletedFaithFoundationsCourse: z.enum(["yes", "no"], {
-    required_error: "Selecciona una opción.",
-  }),
-  hasSeenStudiesOnTheChurch: z.enum(["yes", "no"], {
-    required_error: "Selecciona una opción.",
-  }),
-  hasReadDoctrinalStatement: z.enum(["yes", "no"], {
-    required_error: "Selecciona una opción.",
-  }),
-  questionsOnDoctrinalStatement: z.string().optional(),
-  churchMembershipReason: z.string().min(20, {
-    message: `Explica brevemente porqué quieres ser miembro de ${CHURCH_NAME}.`,
-  }),
-  membershipCommitmentAccepted: z.enum(["yes", "no"], {
-    required_error: "Selecciona una opción.",
-  }),
-});
+async function onSubmit(data: MembershipRequest) {
+  try {
+    const response = await fetch(API_URL + '/members/membership-request', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    })
 
-function onSubmit(data: z.infer<typeof FormSchema>) {
-  toast("You submitted the following values:", {
-    description: (
-      <pre className="mt-2 w-[340px] rounded-md bg-slate-950 p-4">
-        <code className="text-white">{JSON.stringify(data, null, 2)}</code>
-      </pre>
-    ),
-  });
+    if (!response.ok) {
+      throw new Error('Failed to submit membership request')
+    }
+
+    const result = await response.json()
+
+    toast.success('Solicitud enviada con éxito', {
+      description: 'Tu solicitud de membresía ha sido recibida.',
+    })
+
+    console.log(JSON.stringify(result, null, 2))
+  } catch (error) {
+    console.error('Error submitting form:', error)
+    toast.error('Error al registrar la solicitud', {
+      description: 'Por favor intenta nuevamente más tarde.',
+    })
+    throw error
+  }
 }
 
 export default function MembershipRequestForm() {
-  const [showHasBeenBaptizedFields, setShowHasBeenBaptizedFields] =
-    React.useState(false);
-
-  const form = useForm<z.infer<typeof FormSchema>>({
-    resolver: zodResolver(FormSchema),
+  const [showHasBeenBaptizedFields, setShowHasBeenBaptizedFields] = React.useState(false)
+  const form = useForm<MembershipRequest>({
+    resolver: zodResolver(membershipRequestSchema),
     defaultValues: {
-      firstName: "",
-      lastName: "",
-      email: "",
-      phoneNumber: "",
+      firstName: '',
+      lastName: '',
+      email: '',
+      phoneNumber: '',
       christianSinceMonth: MONTHS_IN_A_YEAR[0],
       christianSinceYear: CURRENT_YEAR,
-      hasBeenBaptized: "no",
+      hasBeenBaptized: 'no',
       baptizedOnMonth: MONTHS_IN_A_YEAR[0],
       baptizedOnYear: CURRENT_YEAR,
       attendingSinceMonth: MONTHS_IN_A_YEAR[0],
       attendingSinceYear: CURRENT_YEAR,
-      hasCompletedFaithFoundationsCourse: "no",
-      hasSeenStudiesOnTheChurch: "no",
-      hasReadDoctrinalStatement: "no",
-      questionsOnDoctrinalStatement: "",
-      churchMembershipReason: "",
-      membershipCommitmentAccepted: "no",
+      hasCompletedFaithFoundationsCourse: 'no',
+      hasSeenStudiesOnTheChurch: 'no',
+      hasReadDoctrinalStatement: 'no',
+      questionsOnDoctrinalStatement: '',
+      churchMembershipReason: '',
+      membershipCommitmentAccepted: 'no',
     },
-  });
+  })
 
   return (
     <Form {...form}>
@@ -132,9 +80,7 @@ export default function MembershipRequestForm() {
         onSubmit={form.handleSubmit(onSubmit)}
         className="space-y-8 max-w-[500px] mx-auto p-4"
       >
-        <p className="text-center">
-          Por favor diligencia todos los campos del formulario
-        </p>
+        <p className="text-center">Por favor diligencia todos los campos del formulario</p>
 
         <fieldset className="space-y-4 p-4 rounded-md border border-gray-200 bg-gray-50 dark:bg-gray-950">
           <legend className="text-xl font-semibold">Datos personales</legend>
@@ -171,11 +117,12 @@ export default function MembershipRequestForm() {
             name="email"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="font-semibold">
-                  Correo electrónico
-                </FormLabel>
+                <FormLabel className="font-semibold">Correo electrónico</FormLabel>
                 <FormControl>
-                  <Input type="email" {...field} />
+                  <Input
+                    type="email"
+                    {...field}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -187,11 +134,12 @@ export default function MembershipRequestForm() {
             name="phoneNumber"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="font-semibold">
-                  Número de teléfono
-                </FormLabel>
+                <FormLabel className="font-semibold">Número de teléfono</FormLabel>
                 <FormControl>
-                  <Input type="tel" {...field} />
+                  <Input
+                    type="tel"
+                    {...field}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -222,8 +170,8 @@ export default function MembershipRequestForm() {
                 <FormControl>
                   <RadioGroup
                     onValueChange={(value) => {
-                      field.onChange(value);
-                      setShowHasBeenBaptizedFields(value === "yes");
+                      field.onChange(value)
+                      setShowHasBeenBaptizedFields(value === 'yes')
                     }}
                     defaultValue={field.value}
                     className="flex flex-row space-x-4"
@@ -305,14 +253,14 @@ export default function MembershipRequestForm() {
             render={({ field }) => (
               <FormItem className="space-y-3">
                 <FormLabel className="font-semibold">
-                  Has{" "}
+                  Has{' '}
                   <a
                     href="#"
                     target="_blank"
                     className="text-blue-500 underline"
                   >
                     escuchado/visto
-                  </a>{" "}
+                  </a>{' '}
                   los estudios sobre la iglesia?
                 </FormLabel>
                 <FormControl>
@@ -346,12 +294,14 @@ export default function MembershipRequestForm() {
             render={({ field }) => (
               <FormItem className="space-y-3">
                 <FormLabel className="font-semibold">
-                  Has{" "}
-                  <a href="#" className="text-blue-500 underline">
+                  Has{' '}
+                  <a
+                    href="#"
+                    className="text-blue-500 underline"
+                  >
                     leído
-                  </a>{" "}
-                  la declaración doctrinal y la filosofía de ministerio de{" "}
-                  {CHURCH_NAME}?
+                  </a>{' '}
+                  la declaración doctrinal y la filosofía de ministerio de {CHURCH_NAME}?
                 </FormLabel>
                 <FormControl>
                   <RadioGroup
@@ -384,11 +334,14 @@ export default function MembershipRequestForm() {
             render={({ field }) => (
               <FormItem>
                 <FormLabel className="font-semibold">
-                  Tienes alguna pregunta o desacuerdo con nuestra declaración
-                  doctrinal y filosofía de ministerio?
+                  Tienes alguna pregunta o desacuerdo con nuestra declaración doctrinal y filosofía
+                  de ministerio?
                 </FormLabel>
                 <FormControl>
-                  <Textarea className="resize-none" {...field} />
+                  <Textarea
+                    className="resize-none"
+                    {...field}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -406,7 +359,10 @@ export default function MembershipRequestForm() {
                   Porqué quieres ser miembro de {CHURCH_NAME}?
                 </FormLabel>
                 <FormControl>
-                  <Textarea className="resize-none" {...field} />
+                  <Textarea
+                    className="resize-none"
+                    {...field}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -419,10 +375,13 @@ export default function MembershipRequestForm() {
             render={({ field }) => (
               <FormItem className="space-y-3">
                 <FormLabel className="font-semibold">
-                  Has{" "}
-                  <a href="#" className="text-blue-500 underline">
+                  Has{' '}
+                  <a
+                    href="#"
+                    className="text-blue-500 underline"
+                  >
                     leído
-                  </a>{" "}
+                  </a>{' '}
                   y aceptas voluntariamente el compromiso de membresía?
                 </FormLabel>
                 <FormControl>
@@ -451,135 +410,13 @@ export default function MembershipRequestForm() {
           />
         </fieldset>
 
-        <Button type="submit" className="w-full">
+        <Button
+          type="submit"
+          className="w-full"
+        >
           Enviar
         </Button>
       </form>
     </Form>
-  );
-}
-
-// import {
-//   Dialog,
-//   DialogContent,
-//   DialogDescription,
-//   DialogHeader,
-//   DialogTitle,
-//   DialogTrigger,
-// } from "@/components/ui/dialog"
-// import { cn } from "@/lib/utils";
-
-// function CustomDialog() {
-//   return (
-//     <Dialog>
-//       <DialogTrigger>Open</DialogTrigger>
-//       <DialogContent>
-//         <DialogHeader>
-//           <DialogTitle>Are you absolutely sure?</DialogTitle>
-//           <DialogDescription>
-//             This action cannot be undone. This will permanently delete your account
-//             and remove your data from our servers.
-//           </DialogDescription>
-//         </DialogHeader>
-//       </DialogContent>
-//     </Dialog>
-//   )
-// }
-
-// function DoctrinalStatementDialogContent() {
-//   return (
-//     <Dialog>
-//       <DialogTrigger>Open</DialogTrigger>
-//       <DialogContent>
-//         <DialogHeader>
-//           <DialogTitle>Doctrinal Statement</DialogTitle>
-//           <DialogDescription>
-//             This is the doctrinal statement of {CHURCH_NAME}. Please read it carefully.
-//           </DialogDescription>
-//         </DialogHeader>
-//       </DialogContent>
-//     </Dialog>
-//   )
-// }
-
-{
-  /* <Popover>
-                <PopoverTrigger asChild>
-                  <FormControl>
-                    <Button
-                      variant={"outline"}
-                      className={cn(
-                        "w-full pl-3 text-left font-normal",
-                        !field.value && "text-muted-foreground"
-                      )}
-                    >
-                      {field.value ? (
-                        format(field.value, "PPP")
-                      ) : (
-                        <span>Pick a date</span>
-                      )}
-                      <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                    </Button>
-                  </FormControl>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={field.value}
-                    onSelect={field.onChange}
-                    disabled={(date) =>
-                      date > new Date() || date < new Date("1900-01-01")
-                    }
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover> */
-}
-
-{
-  /* <div className="flex gap-4">
-          <FormField
-            control={form.control}
-            name="christianSince"
-            render={({ field }) => (
-              <FormItem className="flex-1">
-                <FormLabel>Soy cristiano hace</FormLabel>
-                <FormControl>
-                  <Input
-                    type="number"
-                    {...field}
-                    onChange={(e) =>
-                      field.onChange(Number.parseInt(e.target.value))
-                    }
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="christianSincePeriodName"
-            render={({ field }) => (
-              <FormItem className="flex-1">
-                <FormLabel>&nbsp;</FormLabel>
-                <Select
-                  onValueChange={field.onChange}
-                  defaultValue={field.value}
-                >
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select something" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="year(s)">Year(s)</SelectItem>
-                    <SelectItem value="month(s)">Month(s)</SelectItem>
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div> */
+  )
 }

@@ -14,3 +14,5 @@ export const MONTHS_IN_A_YEAR = [
   "Diciembre",
 ] as const;
 export const CURRENT_YEAR = new Date().getFullYear();
+
+export const API_URL = process.env.NEXT_PUBLIC_API_URL;

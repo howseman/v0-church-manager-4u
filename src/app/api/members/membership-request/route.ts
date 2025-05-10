@@ -1,22 +1,27 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 
-import { membershipRequestSchema } from '@/app/shared/membership-request.schema'
-import { CreateMembershipRequestService } from './services/create-membership-request.service'
-import { MembershipRepository } from '../repositories/Memebership.repository'
+import { membershipRequestSchema } from '@/app/shared/schemas/membership-request.schema'
+import { CreateMembershipRequestUseCase } from './services/create-membership-request.uc'
+import { MembershipRepository } from '../repositories/Membership.repository'
 
 export async function POST(request: Request) {
   const membershipRepository = new MembershipRepository()
-  const membershipRequestService = new CreateMembershipRequestService(membershipRepository)
+  const membershipRequestUseCase = new CreateMembershipRequestUseCase(membershipRepository)
 
   try {
     const body = await request.json()
-    const validatedData = membershipRequestSchema.parse({
-      ...body,
-      requestDate: new Date(),
-    })
+    const validatedInput = membershipRequestSchema.parse(body)
+    const result = await membershipRequestUseCase.execute(validatedInput)
 
-    const result = await membershipRequestService.execute(validatedData)
+    return NextResponse.json(
+      {
+        success: false,
+        error: 'Membership request could not be completed.',
+        data: null,
+      },
+      { status: 500 },
+    )
 
     return NextResponse.json(
       {
@@ -30,6 +35,7 @@ export async function POST(request: Request) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         {
+          // message: 'Failed to process membership request',
           success: false,
           errors: error.errors,
         },

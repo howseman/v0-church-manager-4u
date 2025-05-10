@@ -88,7 +88,7 @@ export function MonthYearPicker({
                   }
                   min={minYearValue}
                   max={CURRENT_YEAR}
-                  onBlur={(e) => {
+                  onBlur={() => {
                     field.onBlur();
                     form.trigger("onBlurValidationTrigger");
                   }}

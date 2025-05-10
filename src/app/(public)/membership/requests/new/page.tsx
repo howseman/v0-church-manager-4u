@@ -1,4 +1,4 @@
-import MembershipRequestForm from "./MembershipRequestForm";
+import MembershipRequestForm from './MembershipRequestForm'
 
 export default function NewMembershipRequestPage() {
   return (
@@ -6,5 +6,5 @@ export default function NewMembershipRequestPage() {
       <h1 className="text-2xl md:text-3xl text-center font-bold mb-6">Solicitud de membresía</h1>
       <MembershipRequestForm />
     </div>
-  );
+  )
 }

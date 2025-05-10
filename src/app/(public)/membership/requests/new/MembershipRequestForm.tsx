@@ -16,12 +16,15 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { MonthYearPicker } from '@/components/MonthYearPicker'
-import { API_URL, CHURCH_NAME, CURRENT_YEAR, MONTHS_IN_A_YEAR } from '@/constants'
-import { MembershipRequest, membershipRequestSchema } from '@/app/shared/membership-request.schema'
+import { CHURCH_NAME, CURRENT_YEAR, MONTHS_IN_A_YEAR } from '@/constants'
+import {
+  MembershipRequestFormInput,
+  membershipRequestFormSchema,
+} from './membershipRequestFormSchema'
 
-async function onSubmit(data: MembershipRequest) {
+async function onSubmit(data: MembershipRequestFormInput) {
   try {
-    const response = await fetch(API_URL + '/members/membership-request', {
+    const response = await fetch('/api/members/membership-request', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -30,29 +33,37 @@ async function onSubmit(data: MembershipRequest) {
     })
 
     if (!response.ok) {
-      throw new Error('Failed to submit membership request')
+      console.log('Error response:', response)
+      throw new Error('Se presentó un Error al registrar la solicitud')
     }
 
     const result = await response.json()
-
-    toast.success('Solicitud enviada con éxito', {
-      description: 'Tu solicitud de membresía ha sido recibida.',
-    })
-
     console.log(JSON.stringify(result, null, 2))
+
+    toast.success('Solicitud recibida con éxito', {
+      description:
+        'Tu solicitud de membresía ha sido recibida. Serás redirigido a la pagina de inicio en unos segundos.',
+      duration: 6000,
+    })
   } catch (error) {
-    console.error('Error submitting form:', error)
+    console.error('Error:', error)
     toast.error('Error al registrar la solicitud', {
       description: 'Por favor intenta nuevamente más tarde.',
     })
-    throw error
   }
+}
+
+function onInvalid(errors: Record<string, unknown>) {
+  console.log('Form validation errors:', errors)
+  toast.error('Por favor completa todos los campos requeridos', {
+    description: 'Asegúrate de que todos los campos estén correctamente diligenciados.',
+  })
 }
 
 export default function MembershipRequestForm() {
   const [showHasBeenBaptizedFields, setShowHasBeenBaptizedFields] = React.useState(false)
-  const form = useForm<MembershipRequest>({
-    resolver: zodResolver(membershipRequestSchema),
+  const form = useForm<MembershipRequestFormInput>({
+    resolver: zodResolver(membershipRequestFormSchema),
     defaultValues: {
       firstName: '',
       lastName: '',
@@ -77,7 +88,7 @@ export default function MembershipRequestForm() {
   return (
     <Form {...form}>
       <form
-        onSubmit={form.handleSubmit(onSubmit)}
+        onSubmit={form.handleSubmit(onSubmit, onInvalid)}
         className="space-y-8 max-w-[500px] mx-auto p-4"
       >
         <p className="text-center">Por favor diligencia todos los campos del formulario</p>
